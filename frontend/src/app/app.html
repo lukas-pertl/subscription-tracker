@@ -1,0 +1,223 @@
+<div class="container">
+  <header class="header">
+    <h1>Abo- & Fixkosten-Tracker</h1>
+    <p class="subtitle">Behalte laufenden Verträge, Monatskosten und nächsten Abbuchungen im Blick</p>
+  </header>
+
+  <div class="dashboard-layout">
+    <aside class="left-panel">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Monatliche Fixkosten</span>
+          <strong class="kpi-value">{{ totalMonthlyCost() | number:'1.2-2' }} €</strong>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Hochrechnung / Jahr</span>
+          <strong class="kpi-value">{{ totalYearlyCost() | number:'1.2-2' }} €</strong>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Aktive Verträge</span>
+          <strong class="kpi-value">{{ activeCount() }} / {{ subscriptions().length }}</strong>
+        </div>
+      </div>
+
+      <form (ngSubmit)="saveSubscription()" class="sub-form" novalidate>
+        <h3>{{ isEditing() ? 'Vertrag anpassen' : 'Neues Abo eintragen' }}</h3>
+
+        <div class="form-grid">
+          <div class="field field-full">
+            <label>Anbieter / Name *</label>
+            <input 
+              type="text" 
+              name="name" 
+              autocomplete="off"
+              [(ngModel)]="currentSub.name" 
+              (input)="nameError.set('')"
+              [class.input-invalid]="nameError()"
+              placeholder="z.B. Spotify, Netflix, FitX" 
+            />
+            @if (nameError()) {
+              <span class="error-msg">{{ nameError() }}</span>
+            }
+          </div>
+
+          <div class="field">
+            <label>Betrag (€) *</label>
+            <input 
+              type="text" 
+              autocomplete="off"
+              name="price" 
+              [(ngModel)]="currentSub.price"
+              (input)="priceError.set('')"
+              [class.input-invalid]="priceError()"
+              placeholder="9.99"
+            />
+            @if (priceError()) {
+              <span class="error-msg">{{ priceError() }}</span>
+            }
+          </div>
+
+          <div class="field">
+            <label>Intervall</label>
+            <select name="billingCycle" [(ngModel)]="currentSub.billingCycle">
+              <option value="MONTHLY">Monatlich</option>
+              <option value="YEARLY">Jährlich</option>
+            </select>
+          </div>
+
+          <div class="field field-full">
+            <label>Nächste Abbuchung / Frist *</label>
+            <input 
+              type="date" 
+              name="nextBillingDate" 
+              [(ngModel)]="currentSub.nextBillingDate"
+              (input)="dateError.set('')"
+              [class.input-invalid]="dateError()"
+            />
+            @if (dateError()) {
+              <span class="error-msg">{{ dateError() }}</span>
+            }
+          </div>
+
+          <div class="field field-full">
+            <label>Kategorie * <span class="label-hint">(tippen oder wählen)</span></label>
+            <input 
+              type="text" 
+              name="category" 
+              autocomplete="off"
+              [(ngModel)]="currentSub.category"
+              (input)="categoryError.set('')"
+              [class.input-invalid]="categoryError()"
+              placeholder="Eigene Kategorie oder Vorschlag..." 
+            />
+            @if (categoryError()) {
+              <span class="error-msg">{{ categoryError() }}</span>
+            }
+
+            <div class="chip-group">
+              @for (preset of categoryPresets; track preset) {
+                <button 
+                  type="button" 
+                  class="chip" 
+                  [class.chip-active]="currentSub.category === preset"
+                  (click)="selectCategoryPreset(preset)">
+                  {{ preset }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">
+            {{ isEditing() ? 'Änderungen speichern' : '+ Abo hinzufügen' }}
+          </button>
+          @if (isEditing()) {
+            <button type="button" (click)="resetForm()" class="btn-secondary">Abbrechen</button>
+          }
+        </div>
+      </form>
+    </aside>
+
+    <main class="right-panel">
+      <div class="filter-bar">
+        <div class="search-box">
+          <input 
+            type="text" 
+            autocomplete="off"
+            [ngModel]="searchTerm()" 
+            (ngModelChange)="searchTerm.set($event); currentPage.set(1)"
+            placeholder="Abos nach Name oder Kategorie durchsuchen..." 
+          />
+        </div>
+
+        <div class="filter-controls">
+          <select [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event); currentPage.set(1)">
+            <option value="ALL">Alle Kategorien</option>
+            @for (cat of availableCategories(); track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+
+          <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); currentPage.set(1)">
+            <option value="ALL">Alle Status</option>
+            <option value="ACTIVE">Nur Aktive</option>
+            <option value="PAUSED">Nur Pausierte</option>
+          </select>
+
+          @if (searchTerm() || selectedCategory() !== 'ALL' || statusFilter() !== 'ALL') {
+            <button type="button" class="btn-reset" (click)="resetFilters()">Reset</button>
+          }
+        </div>
+      </div>
+
+      <div class="list-header">
+        <span>6 Abos pro Seite ({{ filteredAndSortedSubscriptions().length }} Treffer gesamt)</span>
+      </div>
+
+      <div class="sub-list">
+        @for (sub of pagedSubscriptions(); track sub.id) {
+          <div class="sub-card" [class.paused]="!sub.active" [class.due-warning]="isDueSoon(sub.nextBillingDate, sub.active)">
+            <div class="sub-main">
+              <div class="sub-header">
+                <strong>{{ sub.name }}</strong>
+                <span class="badge">{{ sub.category }}</span>
+                @if (!sub.active) {
+                  <span class="badge badge-paused">Pausiert</span>
+                }
+              </div>
+              <p class="sub-meta">
+                {{ sub.billingCycle === 'YEARLY' ? 'Jährlich (' + (sub.price | number:'1.2-2') + ' €)' : 'Monatlich' }} 
+                • Abbuchung am 
+                <strong [class.text-danger]="isDueSoon(sub.nextBillingDate, sub.active)">
+                  {{ sub.nextBillingDate | date:'dd.MM.yyyy' }}
+                </strong>
+              </p>
+            </div>
+
+            <div class="sub-right">
+              <div class="price-box">
+                <span class="monthly-price">{{ sub.monthlyCost | number:'1.2-2' }} €</span>
+                <span class="per-month">pro Monat</span>
+              </div>
+
+              <div class="sub-actions">
+                <button type="button" (click)="toggleActive(sub)" class="btn-toggle">
+                  {{ sub.active ? 'Pausieren' : 'Aktivieren' }}
+                </button>
+                <button type="button" (click)="editSubscription(sub)" class="btn-edit">Bearbeiten</button>
+                <button type="button" (click)="deleteSubscription(sub.id)" class="btn-delete">Löschen</button>
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-hint">
+            <p>Keine passenden Abos gefunden.</p>
+          </div>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pagination-bar">
+          <button 
+            type="button" 
+            class="btn-page" 
+            [disabled]="currentPage() === 1" 
+            (click)="prevPage()">
+            ← Zurück
+          </button>
+          
+          <span class="page-info">Seite <strong>{{ currentPage() }}</strong> von {{ totalPages() }}</span>
+          
+          <button 
+            type="button" 
+            class="btn-page" 
+            [disabled]="currentPage() === totalPages()" 
+            (click)="nextPage()">
+            Weiter →
+          </button>
+        </div>
+      }
+    </main>
+  </div>
+</div>
