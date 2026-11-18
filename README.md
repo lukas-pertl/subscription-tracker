@@ -1,32 +1,101 @@
-## Subscription & Fixkosten Tracker
+# Subscription & Fixkosten Tracker
 
-Eine moderne Full-Stack-Webanwendung zur übersichtlichen Verwaltung von Abonnements und monatlichen Fixkosten. Entwickelt mit Angular im Frontend und Spring Boot (Java 21) im Backend.
+Eine Full-Stack-Webanwendung zur zentralen Verwaltung von Abonnements und monatlichen Fixkosten.
 
-Live-Demo: [https://subscription-tracker-lac-pi.vercel.app](https://subscription-tracker-lac-pi.vercel.app)
+Mit dem **Subscription & Fixkosten Tracker** lassen sich wiederkehrende Kosten übersichtlich erfassen, verwalten und kontrollieren. Das Projekt wurde mit Angular im Frontend und Spring Boot im Backend umgesetzt.
 
-Hinweis zur Live-Demo: Das Backend wird kostenlos auf Render gehostet. Nach längerer Inaktivität geht der Server in Standby d.h. der erste Aufruf kann ca. 30–50 Sekunden dauern.
+[Live-Demo öffnen](https://subscription-tracker-lac-pi.vercel.app)
+
+> **Hinweis zur Live-Demo:** Das Backend wird kostenlos über Render gehostet. Bei längerer Inaktivität wechselt der Server in den Standby-Modus. Deshalb kann der erste Aufruf des Backends etwa 30–50 Sekunden dauern.
 
 ---
 
 ## Features
 
- Vollständige CRUD-Funktionalität: Abonnements einfach erstellen, anzeigen, bearbeiten und löschen.
- Kosten-Übersicht: Direkter Überblick über laufende monatliche und jährliche Fixkosten.
- RESTful API: Saubere Trennung zwischen Frontend und Backend über eine dokumentierte Schnittstelle.
+- **Abonnementverwaltung:** Abonnements erstellen, anzeigen, bearbeiten und löschen.
+- **Kostenübersicht:** Laufende monatliche und jährliche Fixkosten auf einen Blick.
+- **Zentrale Verwaltung:** Wiederkehrende Ausgaben übersichtlich an einem Ort verwalten.
+- **REST API:** Kommunikation zwischen Angular-Frontend und Spring-Boot-Backend über eine REST-Schnittstelle.
 
 ---
 
 ## Tech-Stack
 
-Frontend:
- Framework: Angular
- Sprache: TypeScript, HTML5, CSS3
- Hosting: Vercel
+### Frontend
 
-Backend: 
- Framework: Spring Boot 4 (Java 21)
- Datenbank: H2 In-Memory Database (Spring Data JPA / Hibernate)
- Build-Tool: Maven
- Containerisierung & Hosting: Docker auf Render
+- **Framework:** Angular
+- **Programmiersprache:** TypeScript
+- **Webtechnologien:** HTML5, CSS3
+- **Hosting:** Vercel
+
+### Backend
+
+- **Framework:** Spring Boot 4
+- **Programmiersprache:** Java 21
+- **Datenbank:** H2 In-Memory Database
+- **Persistenz:** Spring Data JPA / Hibernate
+- **Build-Tool:** Maven
+- **Containerisierung:** Docker
+- **Hosting:** Render
 
 ---
+
+## Architektur
+
+Die Anwendung folgt einer klassischen Client-Server-Architektur:
+
+```text
+┌──────────────────────┐
+│   Angular Frontend   │
+│     (TypeScript)     │
+└──────────┬───────────┘
+           │
+           │ HTTP / REST
+           ▼
+┌──────────────────────┐
+│  Spring Boot Backend │
+│       (Java 21)      │
+└──────────┬───────────┘
+           │
+           │ Spring Data JPA
+           ▼
+┌──────────────────────┐
+│    H2 In-Memory DB   │
+└──────────────────────┘
+```
+
+Frontend und Backend sind getrennt entwickelt und kommunizieren über eine REST-Schnittstelle.
+
+---
+
+## Datenbank
+
+Für die Datenhaltung wird eine H2 In-Memory Database verwendet. Die Datenbank wird beim Start der Anwendung im Arbeitsspeicher erzeugt.
+
+**Wichtig:** Da es sich um eine In-Memory-Datenbank handelt, gehen gespeicherte Daten beim Neustart des Backends verloren.
+
+---
+
+## Deployment
+
+| Komponente        | Plattform |
+| ----------------- | --------- |
+| Frontend          | Vercel    |
+| Backend           | Render    |
+| Containerisierung | Docker    |
+
+---
+
+## Mögliche zukünftige Erweiterungen
+
+- Benutzerregistrierung und Login
+- Auswertung der monatlichen Ausgaben
+- Kategorien und Filter für Abonnements
+- Erinnerungen vor anstehenden Verlängerungen
+- Persistente Datenbank für dauerhafte Speicherung
+
+---
+
+## Projekt
+
+Dieses Projekt wurde entwickelt, um praktische Erfahrungen in der Full-Stack-Webentwicklung mit Angular, Java und Spring Boot zu sammeln.
